@@ -9,4 +9,25 @@ my first idea was to use a direct drawing style (using lines and transforms), bu
 
 have a look at the code to see. i may add some details and mods here
 
-![generative art pic](turtles.png)
+![generative art pic](turtles.svg)
+
+## build a single snowflake
+
+- 6 turtles, spaced at 60º, $\frac{\pi}{6}, moving out from centre with randomised step lengths and simple 0.5 probability of putting either a hexagon or a circle.
+
+<center>
+<img src="./build_a_flake.gif" width="40%">
+
+<img src="./snowflake_test.gif" width="40%">
+
+</center>
+
+## a hex grid of snowflakes
+
+using `Luxor.jl` `HexGrid()` generator, which supplies center coordinates for points on a hex grid (neat!)
+
+<center>
+<img src="./turtles.svg" width="80%">
+
+</center>
+

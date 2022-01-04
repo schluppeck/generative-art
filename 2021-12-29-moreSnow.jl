@@ -15,6 +15,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ cb876e86-1181-43f9-90e5-48d8dc643fb9
+# using javis implies Luxor... advice not o load Luxor as well.
 using Luxor, PlutoUI, Colors
 
 # ╔═╡ 3faf2bd4-681a-11ec-3404-739438ac1077
@@ -25,103 +26,137 @@ md"# Snowflakes with turtle graphics
 # set width and height of drawing / or movie
 w,h = 800, 600
 
-# ╔═╡ 9f77382b-bb02-44e5-9126-d0337c2cda43
-#@bind snow Clock()
-@bind snow Button("Click me to make a snowflake!")
+# ╔═╡ 829562b9-cdba-4b03-9e96-c769f3474404
+md"## animated snowflakes
 
-# ╔═╡ d7e5c554-77a5-4c9a-b1a2-46c4effe5cd6
-@bind snowMovie Button("Click me to make a gif!")
+using `Luxor.jl` and looking into `Javis.jl` for transitions, etc.
 
-# ╔═╡ a879127d-7925-40c7-a536-460e6d3f3adb
-bang = Movie(w, h, "bang")
+"
 
-# ╔═╡ 43baa8c1-fe49-4fed-8192-748fa221a8e1
-"""
-Draw a snowflake using 6 turtles with `Luxor.jl`
+# ╔═╡ 2a9ab8ce-035b-4773-9e2b-950214fb9144
+@bind frame_by_button CounterButton("Button to control frames")
 
-The all do the same thing, just heading out in 60º degree spacing
-"""
-function drawSnowFlake(x,y, color)
-
-	allTurtles = [Turtle(x,y, true, α, color) for α in π/6:π/3:2π]
-	
-	setopacity(0.8)
-	setline(3)
-	
+# ╔═╡ 4584f01f-fd67-4055-b18b-e88b35535da5
+begin
+	frame_by_button # make it reactive
+	x,y = 0, 0
+	snowColor = (1.0, 1.0, 1.0)
+	allTurtles = [Turtle(x,y, true, α, snowColor) for α in π/6:π/3:2π]
 	useHex = rand([true, false], 1)[1];
 	nSteps = 30
 	allPaces = 6 .* [5, 10, 20]./nSteps
-	allSizes = 10 .* [0.1,1,2,4, 10, 20]./nSteps
-		
-		for i in 1:nSteps
-		
+	allSizes = 20 .* [0.1,1,2,4, 10, 20]./nSteps
+	md"*Setting parameters, 'static' variables*"
+end
+
+# ╔═╡ 8a53a926-7c5d-4257-8a74-ef242640d184
+begin
+	frame_by_button # make reactive	
+	Tpos = [Point[] for α in π/6:π/3:2π];
+	Dpos = [ [] for α in π/6:π/3:2π];
+end
+
+# ╔═╡ 4d68c37e-4195-4bd3-a542-e28b6edc36bf
+function buildSnowFlake(theTurtles, dummy ,frame)
+
+	# take 1 step (frame tells us where we are in seq)
 		pace = rand(allPaces,1)[1]
 		b = rand([true, false], 1)[1]
 		s = rand(allSizes)[1]
-	    for turtle in allTurtles
-	        HueShift(turtle, rand())
+	    for (idx, turtle) in enumerate(theTurtles)
+			# push position onto a stack
+			push!(Tpos[idx], Point(turtle.xpos, turtle.ypos))
+			
+	        Penwidth(turtle, 3)
 	        Forward(turtle, pace)
+			p = Point(turtle.xpos, turtle.ypos)
 			if b
 				if useHex
-					p = Point(turtle.xpos, turtle.ypos)
-					ngon(p, s, 6, 0, :fill)
+					ngon(p, s, 6, 0, :fill)	
 				else
-					Circle(turtle, s)
+					sethue("lightblue")
+					circle(p, s, :fill)
+					sethue(snowColor)
+
+				end
+				push!(Dpos[idx], [b, p, s, useHex])
+			end
+			
+		end
+	
+end
+	
+
+
+# ╔═╡ 50f23384-f504-498f-a8fc-cb907adbafa1
+function single_flake(args...)
+	scale(2)
+	setline(3)
+	buildSnowFlake(args...)
+end
+
+# ╔═╡ 1396aff9-747e-4cc0-8865-e2f6be449b53
+begin
+
+	T = [Turtle(0,0, true, α, snowColor) for α in π/6:π/3:2π]
+
+	demo = Movie(w, h, "test.gif", 1:120)
+
+function backdrop(scene, framenumber)
+	    background("black")
+end
+
+function frame(scene, framenumber)
+
+	sethue("white")
+	buildSnowFlake(T,0,framenumber)
+	
+	# after we have been through once. there should be a path1
+	if @isdefined(Tpos) && ~isempty(Tpos) && framenumber > 2
+		for outline in Tpos
+			sethue(snowColor)
+			setline(2)
+			if ~isempty(outline)
+				poly(outline[1:framenumber], :stroke, close=false)
+			end
+		end 
+	end
+	setopacity(0.8)
+	if @isdefined(Dpos) && ~isempty(Dpos) && framenumber > 2
+		for theT in 1:6
+			for theObj in 1:size( Dpos[theT],1 )
+			
+				d = Dpos[theT][theObj]
+				if d[4] # then hex
+			    	ngon(d[2]..., d[3]..., 6, 0, :fill)
+				else
+					sethue("lightblue")					
+					circle(d[2]..., d[3]..., :fill)
+					sethue(snowColor)
 				end
 			end
-	    end
+		end
 	end
-end
-
-# ╔═╡ d12f37ff-4c2a-41d9-8897-36b4c48b62f0
-begin
-	snow # make it reactive
-	Drawing(w, h, "turtles.png")
-	origin(0,0)
-	background("black")
-	snowColor = (1.0, 1.0, 1.0)
-	#set up a hex grid
-	radius = 100
-	grid = GridHex(O, radius, maximum([w,h]))
-	nFlakes = Int64.(ceil(prod([w,h] ./ radius)))
-
-	for iP in 1:nFlakes
-		p = nextgridpoint(grid)	
-		drawSnowFlake(p.x, p.y, snowColor)
-	end
-	finish()
-	preview()
-end
-
-# ╔═╡ 3197c8b9-1185-4896-b5cd-96db23d71f86
-function aFrame(scene, framenumber)
-	origin(0,0)
-	background("black")
-	snowColor = (1.0, 1.0, 1.0)
-	#set up a hex grid
-	radius = 100
-	grid = GridHex(O, radius, maximum([w,h]))
-	nFlakes = Int64.(ceil(prod([w,h] ./ radius)))
-
-	for iP in 1:nFlakes
-		p = nextgridpoint(grid)	
-		drawSnowFlake(p.x, p.y, snowColor)
-	end
-end
-
-# ╔═╡ 9e64245d-d361-4a72-a63c-a06ac0ead739
-begin
-	snowMovie
-	
-	animate(bang, [
-      Scene(bang, aFrame, 0:10, easingfunction=easeinsine)
-	],
-      creategif=true,
-	framerate = 5;
-      pathname="animationtest.gif")
-
 	
 end
+
+animate(demo, [
+    Scene(demo, backdrop, 1:120),
+    Scene(demo, frame, 1:120,
+        easingfunction=easeinoutcubic,
+        optarg="made with Julia")
+    ],
+	framerate = 20,
+	pathname="./build_a_flake.gif",
+    creategif=true)
+
+end
+
+# ╔═╡ e708cc8d-36c5-4c24-beb8-9ef17881d12e
+
+
+# ╔═╡ 92ecc927-4044-49d3-92fe-1a91a1ca5919
+T
 
 # ╔═╡ 49db3f90-5955-44fc-bd8a-fdf45bade61d
 """
@@ -232,9 +267,9 @@ version = "4.4.0+0"
 
 [[FileIO]]
 deps = ["Pkg", "Requires", "UUIDs"]
-git-tree-sha1 = "2db648b6712831ecb333eae76dbfd1c156ca13bb"
+git-tree-sha1 = "67551df041955cc6ee2ed098718c8fcd7fc7aebe"
 uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-version = "1.11.2"
+version = "1.12.0"
 
 [[FixedPointNumbers]]
 deps = ["Statistics"]
@@ -713,13 +748,15 @@ version = "3.5.0+0"
 # ╟─3faf2bd4-681a-11ec-3404-739438ac1077
 # ╟─cb876e86-1181-43f9-90e5-48d8dc643fb9
 # ╟─4ad9ffcd-4cb2-4ba1-ab1c-59bfbd15687e
-# ╠═d12f37ff-4c2a-41d9-8897-36b4c48b62f0
-# ╟─9f77382b-bb02-44e5-9126-d0337c2cda43
-# ╠═d7e5c554-77a5-4c9a-b1a2-46c4effe5cd6
-# ╠═a879127d-7925-40c7-a536-460e6d3f3adb
-# ╟─3197c8b9-1185-4896-b5cd-96db23d71f86
-# ╠═9e64245d-d361-4a72-a63c-a06ac0ead739
-# ╟─43baa8c1-fe49-4fed-8192-748fa221a8e1
+# ╠═829562b9-cdba-4b03-9e96-c769f3474404
+# ╠═4584f01f-fd67-4055-b18b-e88b35535da5
+# ╠═50f23384-f504-498f-a8fc-cb907adbafa1
+# ╠═4d68c37e-4195-4bd3-a542-e28b6edc36bf
+# ╟─2a9ab8ce-035b-4773-9e2b-950214fb9144
+# ╟─8a53a926-7c5d-4257-8a74-ef242640d184
+# ╠═1396aff9-747e-4cc0-8865-e2f6be449b53
+# ╠═e708cc8d-36c5-4c24-beb8-9ef17881d12e
+# ╠═92ecc927-4044-49d3-92fe-1a91a1ca5919
 # ╟─49db3f90-5955-44fc-bd8a-fdf45bade61d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
