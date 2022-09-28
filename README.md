@@ -2,13 +2,18 @@
 
 trying out generative art with `Luxor.jl` (`julia`). i did some of the exploring in `Pluto` notebook, which adds some really nice interactivity.
 
+<center>
+<img src="./turtles.svg" width="80%">
+
+</center>
+
 ## february - playing with lines
 
 *in progress*
 
 this time i want to explore the simple idea of putting angled lines at regular grid points - and experimenting with placement (order, jitter), how properties change between elements (line thickness, hue, angle), possibly following `perlin` noise or a version of random walk.
 
-
+<!-- 
 <center>
 <figure>
 
@@ -18,6 +23,8 @@ this time i want to explore the simple idea of putting angled lines at regular g
 <figure>
 </center>
 
+!-->
+
 ## (end of) january - mathematical roses
 
 - using `Luxor.jl` to create the table of rose plots on the wikipedia page. I think this looks really beautiful.
@@ -25,7 +32,7 @@ this time i want to explore the simple idea of putting angled lines at regular g
 <center>
 <figure>
 
-<img src="[./IMG_0546.gif](https://en.wikipedia.org/wiki/Rose_(mathematics)#/media/File:Rose-rhodonea-curve-7x9-chart-improved.svg)" width="50%">
+<img src="https://en.wikipedia.org/wiki/Rose_(mathematics)#/media/File:Rose-rhodonea-curve-7x9-chart-improved.svg)" width="50%">
 
 <caption>SVG figure from wikipedia</caption>
 <figure>
